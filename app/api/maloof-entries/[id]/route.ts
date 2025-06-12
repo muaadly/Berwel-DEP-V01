@@ -128,9 +128,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
       entryName: entry['Entry Name'] || '',
       entryType: entry['Entry Type'] || '',
       entryRhythm: entry['Entry Rhythm'] || '',
-      entryLyrics: entry['Entry Lyrics'] || '',
+      lyrics: entry['Entry Lyrics'] || '',
       noteImage: entry['Note Image Name'] ? `/R_Images/Notes Images/${entry['Note Image Name'].replace(/\.[^/.]+$/, ".png")}` : "",
-      typeEntryImage: (() => {
+      entryImage: (() => {
         const typeImageName = entry['Type Entry Image'];
         if (!typeImageName) return "";
         type ImageMap = { [key: string]: string };
@@ -147,7 +147,6 @@ export async function GET(request: Request, { params }: { params: { id: string }
         const finalImageName = imageMap[typeImageName.toUpperCase()] ? imageName : `${baseName}.jpeg`;
         return `/R_Images/Entry Images/${finalImageName}`;
       })(),
-      // Comments and isLikedByUser logic remains
       comments: comments || [],
       isLikedByUser: isLikedByUser,
     };
