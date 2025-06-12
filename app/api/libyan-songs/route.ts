@@ -27,6 +27,7 @@ export async function GET() {
     // Create a map for easy lookup of likes by song ID
     const trendingLikesMap = new Map<string, number>();
     if (trendingData) {
+      console.log('Trending data from Supabase:', trendingData); // Log trending data
       trendingData.forEach(item => {
         trendingLikesMap.set(item.item_id, item.likes_count);
       });
@@ -36,6 +37,7 @@ export async function GET() {
     const songs = parsed.data.map((row: any, idx: number) => {
       const soundCloudLink = row['SoundCloud Link'] || '';
       const songNumber = String(row['Song Number']).trim();
+      console.log(`Processing Song Number: '${songNumber}'`); // Log songNumber
       const likesCount = trendingLikesMap.get(songNumber) ?? 0; // Get likes or default to 0
 
       if (idx < 5) { // Log for the first 5 songs to avoid excessive output
