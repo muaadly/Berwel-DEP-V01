@@ -149,6 +149,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       })(),
       comments: comments || [],
       isLikedByUser: isLikedByUser,
+      likes: likesCount || 0,
     };
     console.log("API returning entry data:", returnedEntry);
     console.log("API returning noteImage path:", returnedEntry.noteImage);

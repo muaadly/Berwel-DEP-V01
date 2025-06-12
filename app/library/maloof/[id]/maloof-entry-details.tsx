@@ -219,7 +219,6 @@ export function MaloofEntryDetails({ entry, similarEntries }: MaloofEntryDetails
               disabled={isTogglingLike || !user}
             >
               <Heart className="h-5 w-5" fill={isLiked ? "currentColor" : "none"} />
-              <span className="ml-1">{typeof currentLikes === "number" ? currentLikes.toLocaleString() : "0"}</span>
               <span className="sr-only">Like</span>
             </Button>
 
@@ -227,6 +226,10 @@ export function MaloofEntryDetails({ entry, similarEntries }: MaloofEntryDetails
               <Share2 className="h-5 w-5" />
               <span className="sr-only">Share</span>
             </Button>
+
+            <div className="flex items-center gap-1 text-gray-400">
+              <span>{typeof currentLikes === "number" ? currentLikes.toLocaleString() : "0"} Likes</span>
+            </div>
           </div>
 
           <EnhancedTabs defaultValue="lyrics" className="w-full">
