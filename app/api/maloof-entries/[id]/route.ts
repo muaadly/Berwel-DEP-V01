@@ -42,13 +42,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
     let parsed;
     try {
       parsed = Papa.parse(file, { header: true });
+      console.log('PapaParse output:', parsed);
     } catch (e) {
       console.error('Failed to parse Maloof Entries CSV:', e);
       return NextResponse.json({ error: 'Failed to parse Maloof Entries CSV', details: e.message }, { status: 500 });
     }
     if (!Array.isArray(parsed.data)) {
-      console.error('Parsed CSV data is not an array:', parsed.data);
-      return NextResponse.json({ error: 'Parsed CSV data is not an array', details: JSON.stringify(parsed.data) }, { status: 500 });
+      console.error('Parsed CSV data is not an array:', parsed.data, 'Full PapaParse output:', parsed);
+      return NextResponse.json({ error: 'Parsed CSV data is not an array', details: JSON.stringify(parsed) }, { status: 500 });
     }
     const allEntries = parsed.data as MaloofEntryCsvRow[];
     const entry = allEntries.find((row) => row['Entry Number'] && String(row['Entry Number']).trim() === String(id).trim());
