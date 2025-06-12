@@ -27,21 +27,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('UserProvider - onAuthStateChange session:', currentSession); // Log session
 
         if (event === 'SIGNED_IN') {
-          // Explicitly get user after sign in event
-          const { data: { user: signedInUser }, error } = await supabase.auth.getUser(); // Renamed user
-          if (error) {
-            console.error('UserProvider - Error getting user after sign in:', error.message);
-            setUser(null);
-            setSession(null);
-          } else {
-            console.log('UserProvider - User obtained after sign in:', signedInUser);
-            setUser(signedInUser);
-            setSession(currentSession);
-          }
+          // Directly use user from currentSession on SIGNED_IN event
+          setUser(currentSession?.user || null);
+          setSession(currentSession);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setSession(null);
         } else {
+           // For other events (e.g., TOKEN_REFRESHED, USER_UPDATED), use the session and user from currentSession
            setSession(currentSession);
            setUser(currentSession?.user || null);
         }
