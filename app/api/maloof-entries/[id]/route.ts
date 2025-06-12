@@ -122,22 +122,16 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // --- Combine CSV and Supabase data ---
     const returnedEntry = {
       id: entry['Entry Number'] || id,
+      entryId: entry['Entry ID'] || '',
       entryName: entry['Entry Name'] || '',
       entryType: entry['Entry Type'] || '',
       entryRhythm: entry['Entry Rhythm'] || '',
-      composer: entry['Composer'] || 'Unknown',
-      origin: entry['Origin'] || 'Unknown',
-      period: entry['Period'] || 'Unknown',
-      recordingStatus: entry['Recording Status'] || 'Unknown',
-      soundCloudLink: entry['SoundCloud Link'] || '',
-      views: parseInt(entry['Views'] || '0', 10),
-      // Use the count from Supabase for likes
-      likes: likesCount ?? parseInt(entry['Likes'] || '0', 10), // Use Supabase count if available, fallback to CSV
-      image: entry['Entry Image'] || '',
-      entryImage: (() => {
+      entryLyrics: entry['Entry Lyrics'] || '',
+      noteImage: entry['Note Image Name'] ? `/R_Images/Notes Images/${entry['Note Image Name'].replace(/\.[^/.]+$/, ".png")}` : "",
+      typeEntryImage: (() => {
         const typeImageName = entry['Type Entry Image'];
         if (!typeImageName) return "";
-        const imageMap: { [key: string]: string } = {
+        const imageMap = {
           'ISB.PNG': 'ISB.jpeg',
           'RSD.PNG': 'RSD.jpeg',
           'SKA.PNG': 'SKA.png',
@@ -146,18 +140,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
           'HSN.PNG': 'HSN.jpeg',
         };
         const imageName = imageMap[typeImageName.toUpperCase()] || typeImageName;
-        const fileExtension = imageName.split('.').pop() || '';
         const baseName = imageName.replace(/\.[^/.]+$/, '');
-        
         const finalImageName = imageMap[typeImageName.toUpperCase()] ? imageName : `${baseName}.jpeg`;
-
         return `/R_Images/Entry Images/${finalImageName}`;
       })(),
-      noteImage: entry['Note Image Name'] ? `/R_Images/Notes Images/${entry['Note Image Name'].replace(/\.[^/.]+$/, ".png")}` : "",
-      lyrics: entry['Entry Lyrics'] || 'No lyrics available.',
-      notes: entry['Notes'] || 'No notes available.',
-      // Include fetched comments and user like status
-      comments: comments || [], // Provide an empty array if fetching failed
+      // Comments and isLikedByUser logic remains
+      comments: comments || [],
       isLikedByUser: isLikedByUser,
     };
     console.log("API returning entry data:", returnedEntry);
@@ -168,12 +156,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
       row['Entry Number'] && String(row['Entry Number']).trim() !== String(id).trim() && row['Entry Type'] === entry['Entry Type']
     ).map((e) => ({
       id: e['Entry Number'] || '',
+      entryId: e['Entry ID'] || '',
       entryName: e['Entry Name'] || '',
       entryType: e['Entry Type'] || '',
-      image: (() => {
+      entryRhythm: e['Entry Rhythm'] || '',
+      typeEntryImage: (() => {
         const typeImageName = e['Type Entry Image'];
         if (!typeImageName) return "";
-        const imageMap: { [key: string]: string } = {
+        const imageMap = {
           'ISB.PNG': 'ISB.jpeg',
           'RSD.PNG': 'RSD.jpeg',
           'SKA.PNG': 'SKA.png',
@@ -182,14 +172,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
           'HSN.PNG': 'HSN.jpeg',
         };
         const imageName = imageMap[typeImageName.toUpperCase()] || typeImageName;
-         const fileExtension = imageName.split('.').pop() || '';
         const baseName = imageName.replace(/\.[^/.]+$/, '');
-        
         const finalImageName = imageMap[typeImageName.toUpperCase()] ? imageName : `${baseName}.jpeg`;
-
         return `/R_Images/Entry Images/${finalImageName}`;
       })(),
-      likes: parseInt(e['Likes'] || '0', 10), // Still using CSV likes for similar entries for simplicity here
     }));
 
     return NextResponse.json({ entry: returnedEntry, similarEntries });
