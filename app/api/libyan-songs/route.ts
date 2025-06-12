@@ -33,15 +33,24 @@ export async function GET() {
     }
 
     // Map to only the relevant columns for the frontend table
-    const songs = parsed.data.map((row: any, idx: number) => ({
-      number: row['Song Number'] || idx + 1,
-      name: row['Song Name'] || '',
-      singer: row['Singer'] || '',
-      category: row['Category'] || '',
-      play: row['SoundCloud Link'] || '',
-      imageName: row['Image Name'] ? `/R_Images/Singers_Images/${row['Image Name']}` : '',
-      likes: trendingLikesMap.get(String(row['Song Number']).trim()) ?? 0,
-    }));
+    const songs = parsed.data.map((row: any, idx: number) => {
+      const soundCloudLink = row['SoundCloud Link'] || '';
+      const songNumber = String(row['Song Number']).trim();
+      const likesCount = trendingLikesMap.get(songNumber) ?? 0; // Get likes or default to 0
+
+      if (idx < 5) { // Log for the first 5 songs to avoid excessive output
+        console.log(`Song ${idx + 1} - SoundCloud Link: ${soundCloudLink}, Likes: ${likesCount}`);
+      }
+      return ({
+        number: row['Song Number'] || idx + 1,
+        name: row['Song Name'] || '',
+        singer: row['Singer'] || '',
+        category: row['Category'] || '',
+        play: soundCloudLink,
+        imageName: row['Image Name'] ? `/R_Images/Singers_Images/${row['Image Name']}` : '',
+        likes: likesCount, // Assign the fetched likes count
+      });
+    });
 
     // Extract unique singers with their image names
     const singersMap = new Map<string, { name: string, imageName: string }>();
