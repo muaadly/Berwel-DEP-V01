@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Search, Filter } from "lucide-react"
 import { Navbar } from "@/components/navbar"
@@ -19,6 +19,30 @@ export default function MaloofPage() {
   const [selectedEntryType, setSelectedEntryType] = useState<string | null>(null)
   const [selectedRhythm, setSelectedRhythm] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [maloofEntries, setMaloofEntries] = useState<MaloofEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMaloofEntries = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/maloof-entries');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setMaloofEntries(data.entries);
+      } catch (e: any) {
+        setError(e.message);
+        console.error("Failed to fetch Maloof entries:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMaloofEntries();
+  }, []);
 
   // In a real application, you would filter the data based on these filters
   // For now, we'll just log the filter changes
@@ -142,8 +166,14 @@ export default function MaloofPage() {
               </CollapsibleFilter>
             </div>
           )}
-
-          <MaloofTable />
+          {loading && <p className="text-center text-gray-400">Loading Maloof entries...</p>}
+          {error && <p className="text-center text-red-500">Error: {error}</p>}
+          {!loading && !error && maloofEntries.length > 0 && (
+            <MaloofTable entries={maloofEntries} />
+          )}
+          {!loading && !error && maloofEntries.length === 0 && (
+            <p className="text-center text-gray-400">No Maloof entries found.</p>
+          )}
         </div>
       </main>
       <Footer />
