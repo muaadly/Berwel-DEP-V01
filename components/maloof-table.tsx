@@ -42,7 +42,6 @@ export function MaloofTable({ entries, showPagination = true, itemsPerPage = 8 }
               <TableHead className="py-3 font-bold text-white">Entry Name</TableHead>
               <TableHead className="py-3 font-bold text-white">Entry Type</TableHead>
               <TableHead className="py-3 font-bold text-white">Entry Rhythm</TableHead>
-              <TableHead className="py-3 font-bold text-white">Likes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -56,7 +55,6 @@ export function MaloofTable({ entries, showPagination = true, itemsPerPage = 8 }
                 <TableCell>{entry['Entry Name']}</TableCell>
                 <TableCell>{entry['Entry Type']}</TableCell>
                 <TableCell>{entry['Entry Rhythm']}</TableCell>
-                <TableCell>{entry.likes.toLocaleString()}</TableCell>
               </TableRow>
             ))}
           </TableBody>

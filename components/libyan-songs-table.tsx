@@ -51,7 +51,6 @@ export function LibyanSongsTable({ songs, showPagination = true, itemsPerPage = 
               <TableHead className="py-3 font-bold text-white">Song Name</TableHead>
               <TableHead className="py-3 font-bold text-white">Singer Name</TableHead>
               <TableHead className="py-3 font-bold text-white">Category</TableHead>
-              <TableHead className="py-3 font-bold text-white">Likes</TableHead>
               <TableHead className="py-3 font-bold text-white">Play</TableHead>
             </TableRow>
           </TableHeader>
@@ -66,7 +65,6 @@ export function LibyanSongsTable({ songs, showPagination = true, itemsPerPage = 
                 <TableCell>{song.name}</TableCell>
                 <TableCell>{song.singer}</TableCell>
                 <TableCell>{song.category}</TableCell>
-                <TableCell>{song.likes}</TableCell>
                 <TableCell>
                   {song.play ? (
                     <a href={song.play} target="_blank" rel="noopener noreferrer">
