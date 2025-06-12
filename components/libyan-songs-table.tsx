@@ -13,6 +13,7 @@ interface Song {
   singer: string
   category: string
   play: string
+  likes: number
 }
 
 interface LibyanSongsTableProps {
@@ -65,7 +66,7 @@ export function LibyanSongsTable({ songs, showPagination = true, itemsPerPage = 
                 <TableCell>{song.name}</TableCell>
                 <TableCell>{song.singer}</TableCell>
                 <TableCell>{song.category}</TableCell>
-                <TableCell>0</TableCell>
+                <TableCell>{song.likes}</TableCell>
                 <TableCell>
                   {song.play ? (
                     <a href={song.play} target="_blank" rel="noopener noreferrer">
