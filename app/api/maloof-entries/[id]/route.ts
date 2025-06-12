@@ -22,7 +22,7 @@ interface MaloofEntryCsvRow {
   'Note Image Name': string;
   'Entry Lyrics': string;
   'Notes': string;
-  // Add any other columns from your Maloof Entries CSV here
+  [key: string]: any; // Add index signature to allow dynamic access
 }
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
@@ -36,16 +36,18 @@ export async function GET(request: Request, { params }: { params: { id: string }
     try {
       file = fs.readFileSync(csvPath, 'utf8');
     } catch (e) {
-      console.error('Failed to read Maloof Entries CSV:', e);
-      return NextResponse.json({ error: 'Failed to read Maloof Entries CSV', details: e.message }, { status: 500 });
+      const error = e as Error;
+      console.error('Failed to read Maloof Entries CSV:', error);
+      return NextResponse.json({ error: 'Failed to read Maloof Entries CSV', details: error.message }, { status: 500 });
     }
     let parsed;
     try {
       parsed = Papa.parse(file, { header: true });
       console.log('PapaParse output:', parsed);
     } catch (e) {
-      console.error('Failed to parse Maloof Entries CSV:', e);
-      return NextResponse.json({ error: 'Failed to parse Maloof Entries CSV', details: e.message }, { status: 500 });
+      const error = e as Error;
+      console.error('Failed to parse Maloof Entries CSV:', error);
+      return NextResponse.json({ error: 'Failed to parse Maloof Entries CSV', details: error.message }, { status: 500 });
     }
     if (!Array.isArray(parsed.data)) {
       console.error('Parsed CSV data is not an array:', parsed.data, 'Full PapaParse output:', parsed);
@@ -59,7 +61,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     // --- Fetch data from Supabase ---
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Fetch comments for this entry
     const { data: comments, error: commentsError } = await supabase
@@ -131,7 +133,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
       typeEntryImage: (() => {
         const typeImageName = entry['Type Entry Image'];
         if (!typeImageName) return "";
-        const imageMap = {
+        type ImageMap = { [key: string]: string };
+        const imageMap: ImageMap = {
           'ISB.PNG': 'ISB.jpeg',
           'RSD.PNG': 'RSD.jpeg',
           'SKA.PNG': 'SKA.png',
@@ -163,7 +166,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
       typeEntryImage: (() => {
         const typeImageName = e['Type Entry Image'];
         if (!typeImageName) return "";
-        const imageMap = {
+        type ImageMap = { [key: string]: string };
+        const imageMap: ImageMap = {
           'ISB.PNG': 'ISB.jpeg',
           'RSD.PNG': 'RSD.jpeg',
           'SKA.PNG': 'SKA.png',
