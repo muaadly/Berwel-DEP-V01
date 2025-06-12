@@ -69,29 +69,38 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     // Check if the current user has liked this entry
-    const { data: userLikeData, error: userError } = await supabase.auth.getUser();
     let isLikedByUser = false;
-    if (userLikeData?.user) {
-       const { data: likeData, error: checkLikeError } = await supabase
-         .from('likes')
-         .select('id')
-         .eq('user_id', userLikeData.user.id)
-         .eq('item_id', id)
-         .eq('item_type', 'maloof')
-         .maybeSingle();
-
-       if (checkLikeError) {
-          console.error('Error checking user like status:', checkLikeError);
-          // Handle error
-       }
-        if (likeData) {
-           isLikedByUser = true;
-        }
+    let userLikeData = null;
+    let userError = null;
+    try {
+      const userResult = await supabase.auth.getUser();
+      userLikeData = userResult.data;
+      userError = userResult.error;
+    } catch (e) {
+      userError = e;
     }
-     if (userError) {
-        console.error('Error fetching user for like check:', userError);
-         // Handle error
-     }
+    if (userLikeData && userLikeData.user) {
+      try {
+        const { data: likeData, error: checkLikeError } = await supabase
+          .from('likes')
+          .select('id')
+          .eq('user_id', userLikeData.user.id)
+          .eq('item_id', id)
+          .eq('item_type', 'maloof')
+          .maybeSingle();
+        if (!checkLikeError && likeData) {
+          isLikedByUser = true;
+        }
+      } catch (e) {
+        // Ignore like check errors if user is present
+      }
+    } else {
+      isLikedByUser = false; // No user session, not liked by user
+    }
+    if (userError) {
+      console.error('Error fetching user for like check:', userError);
+      // Do not throw, just log
+    }
 
     // --- Combine CSV and Supabase data ---
     const returnedEntry = {
