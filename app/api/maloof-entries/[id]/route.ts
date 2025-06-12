@@ -32,13 +32,25 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     // --- Fetch data from CSV ---
     const csvPath = path.join(process.cwd(), 'public', 'MaloofEntries', 'Maloof Entries.csv');
-    const file = fs.readFileSync(csvPath, 'utf8');
-    const parsed = Papa.parse(file, { header: true });
+    let file;
+    try {
+      file = fs.readFileSync(csvPath, 'utf8');
+    } catch (e) {
+      console.error('Failed to read Maloof Entries CSV:', e);
+      return NextResponse.json({ error: 'Failed to read Maloof Entries CSV', details: e.message }, { status: 500 });
+    }
+    let parsed;
+    try {
+      parsed = Papa.parse(file, { header: true });
+    } catch (e) {
+      console.error('Failed to parse Maloof Entries CSV:', e);
+      return NextResponse.json({ error: 'Failed to parse Maloof Entries CSV', details: e.message }, { status: 500 });
+    }
     const allEntries = parsed.data as MaloofEntryCsvRow[];
     const entry = allEntries.find((row) => row['Entry Number'] && String(row['Entry Number']).trim() === String(id).trim());
-
     if (!entry) {
-      return NextResponse.json({ error: 'Maloof entry not found.' }, { status: 404 });
+      console.error(`Entry with id ${id} not found in Maloof Entries CSV.`);
+      return NextResponse.json({ error: `Entry with id ${id} not found in Maloof Entries CSV.` }, { status: 404 });
     }
 
     // --- Fetch data from Supabase ---
