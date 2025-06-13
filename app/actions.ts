@@ -4,19 +4,19 @@ import { createClient } from '@/utils/supabase/server'; // Import server-side cl
 import { revalidatePath } from 'next/cache';
 
 export async function toggleLikeAction(itemId: string, userId: string, isLiked: boolean) {
-  const supabase = await createClient(); // Create server-side client
-
   console.log("[Server Action] toggleLikeAction called:", { itemId, userId, isLiked });
 
   try {
+    const supabase = await createClient();
+
     if (isLiked) {
       // Unlike the item using the stored procedure
       console.log('[Server Action] Attempting to unlike item via RPC:', { userId, itemId });
-      const { data: rpcData, error: unlikeError } = await supabase
+      const { error: unlikeError } = await supabase
         .rpc('unlike_item', {
           p_user_id: userId,
           p_item_id: itemId,
-          p_item_type: 'song' // Assuming item_type is always 'song' for this action
+          p_item_type: 'song'
         });
 
       if (unlikeError) {
@@ -24,18 +24,18 @@ export async function toggleLikeAction(itemId: string, userId: string, isLiked: 
         return { success: false, error: unlikeError.message };
       }
 
-      console.log('[Server Action] Unlike successful. RPC Data:', rpcData);
+      console.log('[Server Action] Unlike successful');
       revalidatePath(`/library/libyan-songs/${itemId}`);
       return { success: true };
 
     } else {
       // Like the item using the stored procedure
       console.log('[Server Action] Attempting to like item via RPC:', { userId, itemId });
-      const { data: rpcData, error: likeError } = await supabase
+      const { error: likeError } = await supabase
         .rpc('like_item', {
           p_user_id: userId,
           p_item_id: itemId,
-          p_item_type: 'song' // Assuming item_type is always 'song' for this action
+          p_item_type: 'song'
         });
 
       if (likeError) {
@@ -43,13 +43,13 @@ export async function toggleLikeAction(itemId: string, userId: string, isLiked: 
         return { success: false, error: likeError.message };
       }
 
-      console.log('[Server Action] Like successful. RPC Data:', rpcData);
+      console.log('[Server Action] Like successful');
       revalidatePath(`/library/libyan-songs/${itemId}`);
       return { success: true };
     }
-  } catch (catchError: any) {
-    console.error('[Server Action] Unexpected error:', catchError);
-    return { success: false, error: catchError.message || 'An unexpected error occurred.' };
+  } catch (error: any) {
+    console.error('[Server Action] Unexpected error:', error);
+    return { success: false, error: error.message || 'An unexpected error occurred.' };
   }
 }
 

@@ -178,46 +178,20 @@ export function SongDetails({ song, similarSongs }: SongDetailsProps) {
 
   // Function to handle like toggle
   const handleLikeToggle = async () => {
-    console.log("handleLikeToggle called. Initial state:", {
-      isTogglingLike,
-      user: user ? { id: user.id, email: user.email } : null,
-      isDatabaseBacked: song.id !== null,
-      songId: song.id,
-      isSupabaseClientAvailable: true
-    });
-
-    // Disable if already toggling, no user, or not database backed
-    if (isTogglingLike || !user || !isDatabaseBacked) {
-      console.log("Like toggle disabled. Reason:", {
-        isTogglingLike,
-        userExists: !!user,
-        isDatabaseBacked,
-        combinedCondition: isTogglingLike || !user || !isDatabaseBacked,
-        isSupabaseClientAvailable: true
-      });
-      if (!user) {
-        alert('Please log in to like items.');
-        return;
-      }
-      if (!song.id) {
-        console.error("Cannot toggle like: Song ID is null (not found in database).");
-        alert("Failed to update like status: Song not linked to database entry.");
-        return;
-      }
+    if (!user) {
+      alert('Please log in to like items.');
+      return;
     }
 
-    try {
-      console.log("handleLikeToggle: Setting isTogglingLike to true.");
-      setIsTogglingLike(true);
-      setCommentError(null);
+    if (isTogglingLike) return;
+    setIsTogglingLike(true);
 
+    try {
       const itemId = song.id;
-      const itemType = 'song'; // Assuming item_type is always 'song' for this component
       const userId = user.id;
 
-      console.log("Starting like toggle operation:", { 
+      console.log('[Client] Starting like toggle operation:', { 
         itemId, 
-        itemType, 
         userId, 
         isLiked,
         types: {
@@ -226,52 +200,24 @@ export function SongDetails({ song, similarSongs }: SongDetailsProps) {
         }
       });
 
-      if (isLiked) {
-        // Call the unlike server action
-        console.log('[Client] Calling toggleLikeAction for unlike:', { itemId, userId, isLiked });
-        const { success, error } = await toggleLikeAction(itemId, userId, isLiked);
+      const { success, error } = await toggleLikeAction(itemId, userId, isLiked);
 
-        if (!success) {
-          console.error('[Client] Error from toggleLikeAction (unlike):', error);
-          alert('Failed to unlike item. Please try again.');
-          throw new Error(error || 'Failed to unlike item.');
-        }
-
-        console.log('[Client] Unlike successful via Server Action');
-        setIsLiked(false);
-        setCurrentLikes((prev: number) => prev - 1);
-        console.log("handleLikeToggle: Unlike successful, isLiked set to false, currentLikes decremented.");
-      } else {
-        // Call the like server action
-        console.log('[Client] Calling toggleLikeAction for like:', { itemId, userId, isLiked });
-        const { success, error } = await toggleLikeAction(itemId, userId, isLiked);
-
-        if (!success) {
-          console.error('[Client] Error from toggleLikeAction (like):', error);
-          alert('Failed to like item. Please try again.');
-          throw new Error(error || 'Failed to like item.');
-        }
-
-        console.log('[Client] Like successful via Server Action');
-        setIsLiked(true);
-        setCurrentLikes((prev: number) => prev + 1);
-        console.log("handleLikeToggle: Like successful, isLiked set to true, currentLikes incremented.");
+      if (!success) {
+        console.error('[Client] Error from toggleLikeAction:', error);
+        alert('Failed to update like status. Please try again.');
+        return;
       }
+
+      // Update local state
+      setIsLiked(!isLiked);
+      setCurrentLikes(prev => isLiked ? prev - 1 : prev + 1);
+      console.log('[Client] Like toggle successful, new state:', { isLiked: !isLiked });
+
     } catch (error: any) {
-      console.error('Error during like toggle operation:', {
-        error,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-        stack: error.stack
-      });
+      console.error('[Client] Error during like toggle:', error);
       alert('Failed to update like status. Please try again.');
-      console.log("handleLikeToggle: Error caught, isTogglingLike will be reset in finally.");
     } finally {
-      console.log('handleLikeToggle: Resetting isTogglingLike state to false.');
       setIsTogglingLike(false);
-      console.log('handleLikeToggle: isTogglingLike state is now:', isTogglingLike);
     }
   };
 
