@@ -4,14 +4,31 @@ import { createClient } from '@/utils/supabase/server'; // Import server-side cl
 import { revalidatePath } from 'next/cache';
 
 export async function toggleLikeAction(itemId: string, userId: string, isLiked: boolean) {
-  console.log("[Server Action] toggleLikeAction called:", { itemId, userId, isLiked });
+  console.log("[Server Action] toggleLikeAction called with:", { 
+    itemId, 
+    userId, 
+    isLiked,
+    types: {
+      itemIdType: typeof itemId,
+      userIdType: typeof userId
+    }
+  });
 
   try {
     const supabase = await createClient();
+    console.log("[Server Action] Supabase client created successfully");
 
     if (isLiked) {
       // Unlike the item using the stored procedure
-      console.log('[Server Action] Attempting to unlike item via RPC:', { userId, itemId });
+      console.log('[Server Action] Attempting to unlike item via RPC:', { 
+        userId, 
+        itemId,
+        types: {
+          userIdType: typeof userId,
+          itemIdType: typeof itemId
+        }
+      });
+      
       const { error: unlikeError } = await supabase
         .rpc('unlike_item', {
           p_user_id: userId,
@@ -30,7 +47,15 @@ export async function toggleLikeAction(itemId: string, userId: string, isLiked: 
 
     } else {
       // Like the item using the stored procedure
-      console.log('[Server Action] Attempting to like item via RPC:', { userId, itemId });
+      console.log('[Server Action] Attempting to like item via RPC:', { 
+        userId, 
+        itemId,
+        types: {
+          userIdType: typeof userId,
+          itemIdType: typeof itemId
+        }
+      });
+      
       const { error: likeError } = await supabase
         .rpc('like_item', {
           p_user_id: userId,
