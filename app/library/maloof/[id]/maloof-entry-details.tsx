@@ -90,6 +90,8 @@ export function MaloofEntryDetails({ entry, similarEntries }: MaloofEntryDetails
     const item_type = 'maloof';
     const user_id = user.id;
 
+    console.log('Attempting to toggle like with:', { item_id, item_type, user_id });
+
     if (isLiked) {
       const { error } = await supabase
         .from('likes')
