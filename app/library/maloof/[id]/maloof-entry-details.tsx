@@ -38,6 +38,7 @@ type MaloofEntry = {
   notes: string
   comments: Comment[]
   isLikedByUser: boolean
+  uuid_id?: string
 }
 
 type SimilarEntry = {
@@ -86,7 +87,7 @@ export function MaloofEntryDetails({ entry, similarEntries }: MaloofEntryDetails
     if (isTogglingLike) return;
     setIsTogglingLike(true);
 
-    const item_id = entry.id;
+    const item_id = entry.uuid_id || entry.id;
     const item_type = 'maloof';
     const user_id = user.id;
 
