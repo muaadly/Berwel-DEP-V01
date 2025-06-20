@@ -9,12 +9,35 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // --- Fetch data from Supabase ---
     const supabase = await createClient();
 
-    // Fetch the Maloof entry by Entry Number
-    const { data: entry, error: entryError } = await supabase
+    // Log column names for debugging
+    const { data: allRows, error: allRowsError } = await supabase
       .from('maloof_entries')
       .select('*')
-      .eq('Entry Number', id)
+      .limit(1);
+    if (allRows && allRows.length > 0) {
+      console.log('First row column names:', Object.keys(allRows[0]));
+    } else {
+      console.log('No rows found in maloof_entries or error:', allRowsError);
+    }
+
+    // Try with 'Entry Number' (original)
+    let { data: entry, error: entryError } = await supabase
+      .from('maloof_entries')
+      .select('*')
+      .eq('Entry Number', Number(id))
       .single();
+
+    // If not found, try with 'entry_number'
+    if (entryError || !entry) {
+      console.log("Trying with 'entry_number' column...");
+      const { data: entry2, error: entryError2 } = await supabase
+        .from('maloof_entries')
+        .select('*')
+        .eq('entry_number', Number(id))
+        .single();
+      entry = entry2;
+      entryError = entryError2;
+    }
 
     if (entryError || !entry) {
       console.error('Error fetching Maloof entry from database:', entryError);
@@ -34,16 +57,17 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     // --- Prepare returned entry ---
     const returnedEntry = {
-      id: entry['Entry Number'] || id,
+      id: entry['Entry Number'] || entry['entry_number'] || id,
       uuid_id: entry['uuid_id'] || '',
-      entryId: entry['Entry ID'] || '',
-      entryName: entry['Entry Name'] || '',
-      entryType: entry['Entry Type'] || '',
-      entryRhythm: entry['Entry Rhythm'] || '',
-      lyrics: entry['Entry Lyrics'] || '',
-      noteImage: entry['Note Image Name'] ? `/R_Images/Notes Images/${entry['Note Image Name'].replace(/\.[^/.]+$/, ".png")}` : "",
+      entryId: entry['Entry ID'] || entry['entry_id'] || '',
+      entryName: entry['Entry Name'] || entry['entry_name'] || '',
+      entryType: entry['Entry Type'] || entry['entry_type'] || '',
+      entryRhythm: entry['Entry Rhythm'] || entry['entry_rhythm'] || '',
+      lyrics: entry['Entry Lyrics'] || entry['entry_lyrics'] || '',
+      noteImage: entry['Note Image Name'] || entry['note_image_name']
+        ? `/R_Images/Notes Images/${(entry['Note Image Name'] || entry['note_image_name']).replace(/\.[^/.]+$/, ".png")}` : "",
       entryImage: (() => {
-        const typeImageName = entry['Type Entry Image'];
+        const typeImageName = entry['Type Entry Image'] || entry['type_entry_image'];
         if (!typeImageName) return "";
         type ImageMap = { [key: string]: string };
         const imageMap: ImageMap = {
@@ -68,17 +92,17 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const { data: similarEntriesRaw, error: similarError } = await supabase
       .from('maloof_entries')
       .select('*')
-      .eq('Entry Type', entry['Entry Type'])
-      .neq('Entry Number', id);
+      .eq('Entry Type', entry['Entry Type'] || entry['entry_type'])
+      .neq('Entry Number', entry['Entry Number'] || entry['entry_number']);
 
     const similarEntries = (similarEntriesRaw || []).map((e: any) => ({
-      id: e['Entry Number'] || '',
-      entryId: e['Entry ID'] || '',
-      entryName: e['Entry Name'] || '',
-      entryType: e['Entry Type'] || '',
-      entryRhythm: e['Entry Rhythm'] || '',
+      id: e['Entry Number'] || e['entry_number'] || '',
+      entryId: e['Entry ID'] || e['entry_id'] || '',
+      entryName: e['Entry Name'] || e['entry_name'] || '',
+      entryType: e['Entry Type'] || e['entry_type'] || '',
+      entryRhythm: e['Entry Rhythm'] || e['entry_rhythm'] || '',
       typeEntryImage: (() => {
-        const typeImageName = e['Type Entry Image'];
+        const typeImageName = e['Type Entry Image'] || e['type_entry_image'];
         if (!typeImageName) return "";
         type ImageMap = { [key: string]: string };
         const imageMap: ImageMap = {
