@@ -2,11 +2,12 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
+  // This `response` object is used to set cookies on the client.
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
-  })
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,34 +18,43 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
+          // If the cookie is set, update the request's cookies.
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          // Also update the response's cookies.
           response.cookies.set({
             name,
             value,
             ...options,
-          })
+          });
         },
         remove(name: string, options: CookieOptions) {
+          // If the cookie is removed, update the request's cookies.
+          request.cookies.delete(name);
+          // Also update the response's cookies.
           response.cookies.set({
             name,
             value: '',
             ...options,
-          })
+          });
         },
       },
     }
-  )
+  );
 
-  // Refresh session if expired and set Cookie header
-  await supabase.auth.getSession()
+  // This is the crucial part: we get the user *once* and this also refreshes the session
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: { user: middlewareUser }, error: middlewareError } = await supabase.auth.getUser();
-  if (middlewareError) {
-    console.error('[Middleware] Error getting user after refresh:', middlewareError.message);
+  if (user) {
+    console.log('[Middleware] User authenticated:', user.id);
   } else {
-    console.log('[Middleware] User in middleware after refresh:', middlewareUser ? middlewareUser.id : 'No user');
+    console.log('[Middleware] No user session found.');
   }
 
-  return response
+  return response;
 }
 
 export const config = {
