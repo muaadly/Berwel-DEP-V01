@@ -2,7 +2,6 @@
   "name": "berwel-music-library",
   "version": "0.1.0",
   "private": true,
-  "description": "Forcing new deployment at 2025-06-21T01:17:00Z",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -81,4 +80,3 @@
     "node": "20.x"
   }
 }
-// Forcing a new deployment at 2025-06-21T01:16:00Z
