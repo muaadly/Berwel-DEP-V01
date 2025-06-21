@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { MaloofEntry } from '@/app/library/page';
 
-export async function GET(request: Request) {
-  try {
-    const supabase = await createClient();
+async function fetchMaloofEntries() {
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+        },
+      }
+    );
 
     const { data, error } = await supabase
       .from('maloof_entries')
@@ -15,6 +26,13 @@ export async function GET(request: Request) {
       console.error("Error fetching Maloof entries from Supabase:", error);
       throw error;
     }
+    
+    return data;
+}
+
+export async function GET(request: Request) {
+  try {
+    const data = await fetchMaloofEntries();
 
     const entries: MaloofEntry[] = data.map((entry: any) => {
       const mappedEntry: any = {
@@ -36,7 +54,6 @@ export async function GET(request: Request) {
         comments: [],
       };
 
-      // Ensure all properties from MaloofEntry are present, even if undefined
       const finalEntry: MaloofEntry = {
         ...mappedEntry,
         'Entry Name': mappedEntry.entryName,
