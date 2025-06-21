@@ -1,129 +1,84 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import path from 'path';
+import { promises as fs } from 'fs';
+import Papa from 'papaparse';
+
+interface MaloofEntryCsvRow {
+  [key: string]: any;
+}
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = params.id;
-    console.log("API received Maloof Entry ID:", id);
+    const maloofCsvPath = path.join(process.cwd(), 'public', 'MaloofEntries', 'Maloof Entries.csv');
+    const csvContent = await fs.readFile(maloofCsvPath, 'utf-8');
 
-    // --- Fetch data from Supabase ---
-    const supabase = await createClient();
+    const results = await new Promise<any>((resolve, reject) => {
+      Papa.parse(csvContent, {
+        header: true,
+        complete: resolve,
+        error: reject,
+      });
+    });
 
-    // Log column names for debugging
-    const { data: allRows, error: allRowsError } = await supabase
-      .from('maloof_entries')
-      .select('*')
-      .limit(1);
-    if (allRows && allRows.length > 0) {
-      console.log('First row column names:', Object.keys(allRows[0]));
-    } else {
-      console.log('No rows found in maloof_entries or error:', allRowsError);
+    const allEntries = results.data as MaloofEntryCsvRow[];
+    const entry = allEntries.find((row) => row['Entry Number'] == id);
+
+    if (!entry) {
+      return NextResponse.json({ error: `Entry with id ${id} not found.` }, { status: 404 });
     }
 
-    // Try with 'Entry Number' (original)
-    let { data: entry, error: entryError } = await supabase
-      .from('maloof_entries')
-      .select('*')
-      .eq('Entry Number', Number(id))
-      .single();
-
-    // If not found, try with 'entry_number'
-    if (entryError || !entry) {
-      console.log("Trying with 'entry_number' column...");
-      const { data: entry2, error: entryError2 } = await supabase
-        .from('maloof_entries')
-        .select('*')
-        .eq('entry_number', Number(id))
-        .single();
-      entry = entry2;
-      entryError = entryError2;
-    }
-
-    if (entryError || !entry) {
-      console.error('Error fetching Maloof entry from database:', entryError);
-      return NextResponse.json({ error: `Entry with id ${id} not found in database.`, details: entryError?.message }, { status: 404 });
-    }
-
-    // Fetch comments for this entry
-    const { data: comments, error: commentsError } = await supabase
-      .from('comments')
-      .select('id, created_at, content, user_id')
-      .eq('item_id', entry.uuid_id)
-      .eq('item_type', 'maloof');
-
-    if (commentsError) {
-      console.error('Error fetching comments:', commentsError);
-    }
-
-    // --- Prepare returned entry ---
     const returnedEntry = {
-      id: entry['Entry Number'] || entry['entry_number'] || id,
+      id: entry['Entry Number'] || id,
       uuid_id: entry['uuid_id'] || '',
-      entryId: entry['Entry ID'] || entry['entry_id'] || '',
-      entryName: entry['Entry Name'] || entry['entry_name'] || '',
-      entryType: entry['Entry Type'] || entry['entry_type'] || '',
-      entryRhythm: entry['Entry Rhythm'] || entry['entry_rhythm'] || '',
-      lyrics: entry['Entry Lyrics'] || entry['entry_lyrics'] || '',
-      noteImage: entry['Note Image Name'] || entry['note_image_name']
-        ? `/R_Images/Notes Images/${(entry['Note Image Name'] || entry['note_image_name']).replace(/\.[^/.]+$/, ".png")}` : "",
+      entryId: entry['Entry ID'] || '',
+      entryName: entry['Entry Name'] || '',
+      entryType: entry['Entry Type'] || '',
+      entryRhythm: entry['Entry Rhythm'] || '',
+      lyrics: entry['Entry Lyrics'] || '',
+      noteImage: entry['Note Image Name'] ? `/R_Images/Notes Images/${entry['Note Image Name'].replace(/\.[^/.]+$/, ".png")}` : "",
       entryImage: (() => {
-        const typeImageName = entry['Type Entry Image'] || entry['type_entry_image'];
+        const typeImageName = entry['Type Entry Image'];
         if (!typeImageName) return "";
-        type ImageMap = { [key: string]: string };
-        const imageMap: ImageMap = {
-          'ISB.PNG': 'ISB.jpeg',
-          'RSD.PNG': 'RSD.jpeg',
-          'SKA.PNG': 'SKA.png',
-          'MHS.PNG': 'MHR.jpeg',
-          'NWA.PNG': 'NWA.jpeg',
-          'HSN.PNG': 'HSN.jpeg',
+        const imageMap: { [key: string]: string } = {
+          'ISB.PNG': 'ISB.jpeg', 'RSD.PNG': 'RSD.jpeg', 'SKA.PNG': 'SKA.png',
+          'MHS.PNG': 'MHR.jpeg', 'NWA.PNG': 'NWA.jpeg', 'HSN.PNG': 'HSN.jpeg',
         };
         const imageName = imageMap[typeImageName.toUpperCase()] || typeImageName;
         const baseName = imageName.replace(/\.[^/.]+$/, '');
         const finalImageName = imageMap[typeImageName.toUpperCase()] ? imageName : `${baseName}.jpeg`;
         return `/R_Images/Entry Images/${finalImageName}`;
       })(),
-      comments: comments || [],
+      comments: [], // Comments are not in CSV
+      isLikedByUser: false, // Likes are not in CSV
+      likes: 0, // Likes are not in CSV
     };
-    console.log("API returning entry data:", returnedEntry);
-    console.log("API returning noteImage path:", returnedEntry.noteImage);
 
-    // Find similar entries based on Entry Type (example logic, adjust as needed)
-    const { data: similarEntriesRaw, error: similarError } = await supabase
-      .from('maloof_entries')
-      .select('*')
-      .eq('Entry Type', entry['Entry Type'] || entry['entry_type'])
-      .neq('Entry Number', entry['Entry Number'] || entry['entry_number']);
-
-    const similarEntries = (similarEntriesRaw || []).map((e: any) => ({
-      id: e['Entry Number'] || e['entry_number'] || '',
-      entryId: e['Entry ID'] || e['entry_id'] || '',
-      entryName: e['Entry Name'] || e['entry_name'] || '',
-      entryType: e['Entry Type'] || e['entry_type'] || '',
-      entryRhythm: e['Entry Rhythm'] || e['entry_rhythm'] || '',
-      typeEntryImage: (() => {
-        const typeImageName = e['Type Entry Image'] || e['type_entry_image'];
-        if (!typeImageName) return "";
-        type ImageMap = { [key: string]: string };
-        const imageMap: ImageMap = {
-          'ISB.PNG': 'ISB.jpeg',
-          'RSD.PNG': 'RSD.jpeg',
-          'SKA.PNG': 'SKA.png',
-          'MHS.PNG': 'MHR.jpeg',
-          'NWA.PNG': 'NWA.jpeg',
-          'HSN.PNG': 'HSN.jpeg',
-        };
-        const imageName = imageMap[typeImageName.toUpperCase()] || typeImageName;
-        const baseName = imageName.replace(/\.[^/.]+$/, '');
-        const finalImageName = imageMap[typeImageName.toUpperCase()] ? imageName : `${baseName}.jpeg`;
-        return `/R_Images/Entry Images/${finalImageName}`;
-      })(),
-    }));
+    const similarEntries = allEntries
+      .filter((row) => row['Entry Number'] !== id && row['Entry Type'] === entry['Entry Type'])
+      .map((e) => ({
+        id: e['Entry Number'] || '',
+        entryName: e['Entry Name'] || '',
+        entryType: e['Entry Type'] || '',
+        entryRhythm: e['Entry Rhythm'] || '',
+        image: (() => {
+            const typeImageName = e['Type Entry Image'];
+            if (!typeImageName) return "/placeholder.svg";
+            const imageMap: { [key: string]: string } = {
+              'ISB.PNG': 'ISB.jpeg', 'RSD.PNG': 'RSD.jpeg', 'SKA.PNG': 'SKA.png',
+              'MHS.PNG': 'MHR.jpeg', 'NWA.PNG': 'NWA.jpeg', 'HSN.PNG': 'HSN.jpeg',
+            };
+            const imageName = imageMap[typeImageName.toUpperCase()] || typeImageName;
+            const baseName = imageName.replace(/\.[^/.]+$/, '');
+            const finalImageName = imageMap[typeImageName.toUpperCase()] ? imageName : `${baseName}.jpeg`;
+            return `/R_Images/Entry Images/${finalImageName}`;
+        })(),
+      }));
 
     return NextResponse.json({ entry: returnedEntry, similarEntries });
 
   } catch (error: any) {
-    console.error("Error fetching maloof entry details:", error);
-    return NextResponse.json({ error: 'Failed to load entry.', details: error.message }, { status: 500 });
+    console.error("Error fetching Maloof entry details:", error);
+    return NextResponse.json({ error: 'Failed to load entry details.', details: error.message }, { status: 500 });
   }
 } 

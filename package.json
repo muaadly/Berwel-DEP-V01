@@ -1,7 +1,8 @@
 {
-  "name": "my-v0-project",
+  "name": "berwel-music-library",
   "version": "0.1.0",
   "private": true,
+  "description": "Forcing new deployment at 2025-06-21T01:17:00Z",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -39,8 +40,8 @@
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
     "@radix-ui/react-visually-hidden": "^1.2.3",
-    "@supabase/ssr": "0.4.0",
-    "@supabase/supabase-js": "^2.49.8",
+    "@supabase/ssr": "^0.4.0",
+    "@supabase/supabase-js": "^2.44.2",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -50,12 +51,12 @@
     "framer-motion": "latest",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
-    "next": "15.2.4",
+    "next": "14.2.4",
     "next-themes": "^0.4.4",
-    "papaparse": "^5.5.3",
-    "react": "^19",
+    "papaparse": "^5.4.1",
+    "react": "^18",
     "react-day-picker": "8.10.1",
-    "react-dom": "^19",
+    "react-dom": "^18",
     "react-hook-form": "^7.54.1",
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.0",
@@ -70,11 +71,14 @@
     "@types/papaparse": "^5.3.16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.4",
     "postcss": "^8",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5"
   },
   "engines": {
     "node": "20.x"
   }
 }
+// Forcing a new deployment at 2025-06-21T01:16:00Z
