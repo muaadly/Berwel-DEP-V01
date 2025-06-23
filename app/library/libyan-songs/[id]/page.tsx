@@ -1,10 +1,10 @@
 "use client"
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SongDetails } from "./song-details";
 
-export default function LibyanSongPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function LibyanSongPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [song, setSong] = useState<any>(null);
   const [similarSongs, setSimilarSongs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

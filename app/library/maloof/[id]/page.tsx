@@ -18,15 +18,13 @@ import { Footer } from "@/components/footer"
 // import { Button } from "@/components/ui/button"
 import { MaloofEntryDetails } from "@/app/library/maloof/[id]/maloof-entry-details"
 import { MaloofEntry } from "@/app/library/page"
-import { use } from "react"
 
 interface MaloofPageProps {
   params: { id: string };
 }
 
 export default function MaloofPage({ params }: MaloofPageProps) {
-  const entryParams = use(params as any) as { id: string }; // Cast use(params) to any and then to expected type
-  const id = entryParams.id;
+  const id = params.id;
   const [entryData, setEntryData] = useState<MaloofEntry | null>(null);
   const [similarEntries, setSimilarEntries] = useState<MaloofEntry[]>([]);
   const [loading, setLoading] = useState(true);
