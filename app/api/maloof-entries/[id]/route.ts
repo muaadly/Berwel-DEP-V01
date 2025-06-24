@@ -22,7 +22,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     });
 
     const allEntries = results.data as MaloofEntryCsvRow[];
-    const entry = allEntries.find((row) => row['Entry Number'] == id);
+    const entry = allEntries.find((row) => row['Entry Number'] === id);
 
     if (!entry) {
       return NextResponse.json({ error: `Entry with id ${id} not found.` }, { status: 404 });
